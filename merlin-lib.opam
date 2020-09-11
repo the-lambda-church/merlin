@@ -1,0 +1,23 @@
+opam-version: "2.0"
+maintainer:   "defree@gmail.com"
+authors:      "The Merlin team"
+homepage:     "https://github.com/ocaml/merlin"
+bug-reports:  "https://github.com/ocaml/merlin/issues"
+dev-repo: "git+https://github.com/ocaml/merlin.git"
+build: [
+  ["dune" "subst"] {pinned}
+  ["dune" "build" "-p" name "-j" jobs]
+]
+depends: [
+  "ocaml" {>= "4.02.3" & < "4.12"}
+  "dune" {>= "1.8.0"}
+  "yojson" {>= "1.6.0"}
+  "csexp" {>= "1.2.3"}
+  "result" {>= "1.5"}
+]
+synopsis:
+  "Common libraries for language-support tools.
+  The API of this library may change without warning"
+description:
+  "These libraries can be used to implement language-aware tools. It is used by
+  the standard Merlin frontend, the OCaml LSP server and tools like dot-merlin-reader."

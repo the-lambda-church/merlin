@@ -1,0 +1,10 @@
+(library
+ (name      merlin_extend)
+ (public_name      merlin-lib.extend)
+ (wrapped   false)
+ (modules   (:standard \ extend_helper))
+ (libraries
+  unix
+  parsing
+  typing
+  utils))

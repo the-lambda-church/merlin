@@ -13,8 +13,6 @@ build: [
 depends: [
   "ocaml" {>= "4.02.1"}
   "dune" {>= "1.8.0"}
-  "yojson" {>= "1.6.0"}
+  "merlin-lib"
   "ocamlfind" {>= "1.6.0"}
-  "csexp" {>= "1.2.3"}
-  "result" {>= "1.5"}
 ]

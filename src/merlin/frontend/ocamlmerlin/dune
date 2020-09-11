@@ -1,0 +1,38 @@
+(include_subdirs unqualified)
+
+(executable
+ (name ocamlmerlin_server)
+ (package merlin)
+ (public_name ocamlmerlin-server)
+ (modules (:standard \ gen_ccflags))
+ (libraries
+  query_commands
+  merlin-lib.query_protocol
+  merlin-lib.config
+  merlin-lib.analysis
+  merlin-lib.kernel
+  merlin-lib.merlin_utils
+  merlin-lib.parsing
+  merlin-lib.typing
+  merlin-lib.utils
+  yojson os_ipc))
+
+(executable
+ (name      gen_ccflags)
+ (modules   gen_ccflags)
+ (libraries str))
+
+(rule
+ (targets pre-flags post-flags)
+ (deps    gen_ccflags.exe)
+ (action  (run %{deps} "%{ocaml-config:ccomp_type}" %{targets})))
+
+(rule
+ (targets ocamlmerlin.exe)
+ (deps    (:c ocamlmerlin.c) pre-flags post-flags)
+ (action  (run %{cc} "%{read-lines:pre-flags}%{targets}" %{c} %{read-lines:post-flags})))
+
+(install
+ (package merlin)
+ (section bin)
+ (files   (ocamlmerlin.exe as ocamlmerlin)))

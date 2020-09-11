@@ -1,0 +1,11 @@
+(rule
+ (targets my_config.ml)
+ (deps gen_config.ml)
+ (action (with-stdout-to %{targets}
+          (run %{ocaml} gen_config.ml %{ocaml_version}))))
+
+(library
+ (name config)
+ (public_name merlin-lib.config)
+ (wrapped false)
+ (modules my_config))

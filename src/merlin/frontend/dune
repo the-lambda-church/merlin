@@ -1,0 +1,14 @@
+(library
+ (name      query_commands)
+ (public_name merlin.query_commands)
+ (modules   query_commands)
+ (libraries
+  merlin-lib.merlin_utils
+  merlin-lib.kernel
+  merlin-lib.utils
+  merlin-lib.parsing
+  merlin-lib.typing
+  merlin-lib.specific
+  merlin-lib.config
+  merlin-lib.analysis
+  merlin-lib.query_protocol))

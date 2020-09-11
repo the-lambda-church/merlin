@@ -56,10 +56,10 @@ jobs:
           # Version of the OCaml compiler to initialise
           ocaml-version: ${{ matrix.ocaml-version }}
 
-      - run: opam pin add merlin.dev . --no-action
-      - run: opam pin add dot-merlin-reader.dev . --no-action
+      - run: opam pin add merlin-lib.dev . --yes
+      - run: opam pin add dot-merlin-reader.dev . --yes
       - run: opam depext conf-jq --yes # merlin --yes --with-test # opam depext bug
       - run: opam install . --deps-only --with-test
       - run: opam install menhir
-      - run: opam exec -- dune build
-      - run: opam exec -- dune runtest
+      - run: opam exec -- dune build -p merlin
+      - run: opam exec -- dune runtest -p merlin

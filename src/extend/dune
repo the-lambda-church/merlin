@@ -1,5 +1,0 @@
-(library
- (name      merlin_extend)
- (wrapped   false)
- (modules   (:standard \ extend_helper))
- (libraries parsing typing unix utils))

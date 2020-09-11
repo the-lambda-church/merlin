@@ -1,0 +1,8 @@
+(library
+ (name      query_protocol)
+ (public_name merlin-lib.query_protocol)
+ (modules   query_protocol)
+ (libraries
+  merlin_kernel
+  merlin_utils
+  parsing))
