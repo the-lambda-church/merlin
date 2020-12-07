@@ -20,14 +20,11 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          #- macos-latest
+          - macos-latest
           - ubuntu-latest
           - windows-latest
         ocaml-version:
           - 4.11.1
-        include:
-          - os: macos-latest
-            ocaml-version: 4.11.1
     # The type of runner that the job will run on
     runs-on: ${{ matrix.os }}
 
