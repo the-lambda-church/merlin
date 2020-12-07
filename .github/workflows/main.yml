@@ -22,7 +22,7 @@ jobs:
         os:
           #- macos-latest
           - ubuntu-latest
-          #- windows-latest
+          - windows-latest
         ocaml-version:
           - 4.11.1
         include:
