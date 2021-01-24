@@ -1,3 +1,4 @@
 configure eol=lf
 *.sh eol=lf
 *.patch eol=lf
+merlin-wrapper eol=lf
