@@ -1922,5 +1922,5 @@ Short cuts:
 (eval-after-load 'company '(require 'merlin-company))
 (eval-after-load 'auto-complete '(require 'merlin-ac))
 (eval-after-load 'iedit '(require 'merlin-iedit))
-
+(eval-after-load 'counsel '(require 'merlin-counsel))
 ;;; merlin.el ends here
