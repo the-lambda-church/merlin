@@ -33,6 +33,9 @@ module Dir = struct
 
   let create path =
     { path; files = Array.to_list (Directory_content_cache.read path) }
+
+  let check t = Directory_content_cache.check t.path
+
 end
 
 let dirs = s_ref []
@@ -58,9 +61,35 @@ let add dir =
     ) dir.Dir.files
 
 let init l =
-  reset ();
-  dirs := List.rev_map Dir.create l;
-  List.iter add !dirs
+  assert (not Config.merlin || Local_store.is_bound ());
+  let rec loop_changed acc = function
+    | [] -> Some acc
+    | new_path :: new_rest ->
+      loop_changed (Dir.create new_path :: acc) new_rest
+  in
+  let rec loop_unchanged acc new_paths old_dirs =
+    match new_paths, old_dirs with
+    | [], [] -> None
+    | new_path :: new_rest, [] ->
+      loop_changed (Dir.create new_path :: acc) new_rest
+    | [], _ :: _ -> Some acc
+    | new_path :: new_rest, old_dir :: old_rest ->
+      if String.equal new_path (Dir.path old_dir) then begin
+        if Dir.check old_dir then begin
+          loop_unchanged (old_dir :: acc) new_rest old_rest
+        end else begin
+          loop_changed (Dir.create new_path :: acc) new_rest
+        end
+      end else begin
+        loop_changed (Dir.create new_path :: acc) new_rest
+      end
+  in
+  match loop_unchanged [] l (List.rev !dirs) with
+  | None -> ()
+  | Some new_dirs ->
+    reset ();
+    dirs := new_dirs;
+    List.iter add new_dirs
 
 let remove_dir dir =
   assert (not Config.merlin || Local_store.is_bound ());

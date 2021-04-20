@@ -34,6 +34,7 @@ end) : sig
   val read  : string -> Input.t
   val flush : ?older_than:float -> unit -> unit
   val clear : unit -> unit
+  val check : string -> bool
 
   val get_cached_entry : string -> Input.t
   (** @raises Not_found if the file is not in cache. *)
