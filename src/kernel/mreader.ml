@@ -8,7 +8,6 @@ type parsetree = [
 type comment = (string * Location.t)
 
 type result = {
-  config        : Mconfig.t;
   lexer_keywords: string list;
   lexer_errors  : exn list;
   parser_errors : exn list;
@@ -34,7 +33,6 @@ let normal_parse ?for_completion config source =
     then Mreader_parser.MLI
     else Mreader_parser.ML
   in
-  Mocaml.setup_config config;
   let lexer =
     let keywords = Extension.keywords Mconfig.(config.merlin.extensions) in
     Mreader_lexer.make Mconfig.(config.ocaml.warnings) keywords config source
@@ -54,7 +52,7 @@ let normal_parse ?for_completion config source =
   and parsetree = Mreader_parser.result parser
   and comments = Mreader_lexer.comments lexer
   in
-  { config; lexer_keywords; lexer_errors; parser_errors; comments; parsetree;
+  { lexer_keywords; lexer_errors; parser_errors; comments; parsetree;
     no_labels_for_completion; }
 
 (* Pretty-printing *)
@@ -170,36 +168,6 @@ let parse ?for_completion config source =
   | Some (`No_labels no_labels_for_completion, parsetree) ->
     let (lexer_errors, parser_errors, comments) = ([], [], []) in
     let lexer_keywords = [] (* TODO? *) in
-    { config; lexer_keywords; lexer_errors; parser_errors; comments; parsetree;
+    { lexer_keywords; lexer_errors; parser_errors; comments; parsetree;
       no_labels_for_completion; }
   | None -> normal_parse ?for_completion config source
-
-(* Update config after parse *)
-
-(*
-let apply_directives config tree =
-  let config = ref config in
-  let attribute _ attr =
-    let ({Location. txt = name; _}, payload) = Ast_helper.Attr.as_tuple attr in
-    match name with
-    | "merlin.directive.require" ->
-      begin match Ast_helper.extract_str_payload payload with
-        | None -> ()
-        | Some (package, _) ->
-          let open Mconfig in
-          let merlin = !config.merlin in
-          let merlin = {merlin with packages_to_load =
-                                      package :: merlin.packages_to_load} in
-          config := {!config with merlin}
-      end
-    | _ -> ()
-  in
-  let open Ast_iterator in
-  let iterator = {default_iterator with attribute} in
-  begin match tree with
-    | `Interface sg -> iterator.signature iterator sg
-    | `Implementation str -> iterator.structure iterator str
-  end;
-  !config
-*)
-let apply_directives config _tree = config

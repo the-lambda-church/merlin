@@ -44,7 +44,7 @@ let rewrite cfg parsetree =
   with
   | parsetree ->
     restore ();
-    cfg, parsetree
+    parsetree
   | exception exn ->
     log ~title:"rewrite" "failed with %a" Logger.fmt (fun fmt ->
       match Location.error_of_exn exn with
@@ -55,4 +55,4 @@ let rewrite cfg parsetree =
     );
     Msupport.raise_error exn;
     restore ();
-    cfg, parsetree
+    parsetree
