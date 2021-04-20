@@ -31,17 +31,8 @@ module Dir = struct
   let path t = t.path
   let files t = t.files
 
-  (* For backward compatibility reason, simulate the behavior of
-     [Misc.find_in_path]: silently ignore directories that don't exist
-     + treat [""] as the current directory. *)
-  let readdir_compat dir =
-    try
-      Sys.readdir (if dir = "" then Filename.current_dir_name else dir)
-    with Sys_error _ ->
-      [||]
-
   let create path =
-    { path; files = Array.to_list (readdir_compat path) }
+    { path; files = Array.to_list (Directory_content_cache.read path) }
 end
 
 let dirs = s_ref []
