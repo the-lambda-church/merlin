@@ -244,21 +244,28 @@ let check_recmod_typedecls env decls =
 
 (* Merge one "with" constraint in a signature *)
 
-let rec add_rec_types env = function
-    Sig_type(id, decl, Trec_next, _) :: rem ->
-      add_rec_types (Env.add_type ~check:true id decl env) rem
-  | _ -> env
-
-let check_type_decl env loc id row_id newdecl decl rs rem =
-  let env = Env.add_type ~check:true id newdecl env in
-  let env =
+let check_type_decl env loc id row_id newdecl decl =
+  let fresh_id = Ident.rename id in
+  let path = Pident fresh_id in
+  let sub = Subst.add_type id path Subst.identity in
+  let fresh_row_id, sub =
     match row_id with
-    | None -> env
-    | Some id -> Env.add_type ~check:false id newdecl env
+    | None -> None, sub
+    | Some id ->
+      let fresh_row_id = Some (Ident.rename id) in
+      let sub = Subst.add_type id (Pident fresh_id) sub in
+      fresh_row_id, sub
   in
-  let env = if rs = Trec_not then env else add_rec_types env rem in
-  Includemod.type_declarations ~mark:Mark_both ~loc env id newdecl decl;
-  Typedecl.check_coherence env loc (Path.Pident id) newdecl
+  let newdecl = Subst.type_declaration sub newdecl in
+  let decl = Subst.type_declaration sub decl in
+  let env = Env.add_type ~check:false fresh_id newdecl env in
+  let env =
+    match fresh_row_id with
+    | None -> env
+    | Some fresh_row_id -> Env.add_type ~check:false fresh_row_id newdecl env
+  in
+  Includemod.type_declarations ~mark:Mark_both ~loc env fresh_id newdecl decl;
+  Typedecl.check_coherence env loc path newdecl
 
 let update_rec_next rs rem =
   match rs with
@@ -513,7 +520,7 @@ let merge_constraint initial_env remove_aliases loc sg constr =
           Typedecl.transl_with_constraint id (Some(Pident id_row))
             ~sig_env ~sig_decl:decl ~outer_env:initial_env sdecl in
         let newdecl = tdecl.typ_type in
-        check_type_decl sig_env sdecl.ptype_loc id row_id newdecl decl rs rem;
+        check_type_decl sig_env sdecl.ptype_loc id row_id newdecl decl;
         let decl_row = {decl_row with type_params = newdecl.type_params} in
         let rs' = if rs = Trec_first then Trec_not else rs in
         (Pident id, lid, Twith_type tdecl),
@@ -527,7 +534,7 @@ let merge_constraint initial_env remove_aliases loc sg constr =
           Typedecl.transl_with_constraint id None
             ~sig_env ~sig_decl ~outer_env:initial_env sdecl in
         let newdecl = tdecl.typ_type and loc = sdecl.ptype_loc in
-        check_type_decl sig_env loc id row_id newdecl sig_decl rs rem;
+        check_type_decl sig_env loc id row_id newdecl sig_decl;
         begin match constr with
           Pwith_type _ ->
             (Pident id, lid, Twith_type tdecl),
