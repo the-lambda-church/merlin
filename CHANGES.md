@@ -9,6 +9,7 @@ git version
     - fix location of module definitions done via functors (#1329, fixes #1199)
     - fix -cmt-path dirs mistakenly added to build path (#1330)
     - add new module holes that can replace module expressions (#1333)
+    - improve load path performance (#1323)
 
 merlin 4.2
 ==========
