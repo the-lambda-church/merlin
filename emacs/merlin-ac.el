@@ -1,4 +1,4 @@
-;;; merlin-ac.el --- Merlin and auto-complete integration.   -*- coding: utf-8; lexical-binding: t -*-
+;;; merlin-ac.el --- Merlin and auto-complete integration   -*- coding: utf-8; lexical-binding: t -*-
 ;; Licensed under the MIT license.
 
 ;; Author: Simon Castellan <simon.castellan(_)iuwt.fr>

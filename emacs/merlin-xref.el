@@ -1,4 +1,15 @@
-;; -*- lexical-binding: t -*-
+;;; merlin-xref.el --- Merlin xref backend   -*- coding: utf-8; lexical-binding: t -*-
+;; Licensed under the MIT license.
+
+;; Version: 0.1
+;; Package-Requires: ((emacs "25.1") (merlin "3"))
+;; URL: http://github.com/ocaml/merlin)
+
+;;; Commentary:
+
+;; "Merlin backend for Xref.
+
+;;; Code:
 (require 'cl-lib)
 (require 'xref)
 (require 'merlin)
@@ -36,3 +47,5 @@
   nil)
 
 (provide 'merlin-xref)
+
+;;; merlin-xref.el ends here

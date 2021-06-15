@@ -1,4 +1,4 @@
-;;; merlin-imenu.el --- Merlin and imenu integration.   -*- coding: utf-8; lexical-binding: t -*-
+;;; merlin-imenu.el --- Merlin and imenu integration   -*- coding: utf-8; lexical-binding: t -*-
 ;; Licensed under the MIT license.
 
 ;; Author: tddsg (Ta Quang Trung)
@@ -7,8 +7,13 @@
 ;;   - v0.1: July 2016
 ;;   - v0.2: 27 April 2017
 ;;   - v0.3: 21 August 2019
-;; Keywords: ocaml, imenu, merlin
-;; URL:
+;; Keywords: ocaml, imenu, merlin, languages
+;; Package-Requires: ((emacs "24.4"))
+;; URL: http://github.com/ocaml/merlin
+
+;;; Commentary:
+
+;; Merlin and imenu integration.
 
 (require 'imenu)
 (require 'subr-x)
