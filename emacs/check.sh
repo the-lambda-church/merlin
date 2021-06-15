@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/bash
 set -euxo pipefail
 
 # Adapted from https://github.com/purcell/package-lint/blob/master/run-tests.sh
