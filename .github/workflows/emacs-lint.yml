@@ -8,22 +8,15 @@ jobs:
     strategy:
       matrix:
         emacs_version:
-          - 25.1
-          - 25.2
+          #- 25.1
+          #- 25.2
           - 25.3
-          - 26.1
-          - 26.2
+          #- 26.1
+          #- 26.2
           - 26.3
-          - 27.1
+          #- 27.1
           - 27.2
           - snapshot
-        # include:
-        #   - emacs_version: 24.1
-        #     lint_ignore: 1
-        #   - emacs_version: 24.2
-        #     lint_ignore: 1
-    env:
-      EMACS_LINT_IGNORE: ${{ matrix.lint_ignore }}
     steps:
     - uses: purcell/setup-emacs@master
       with:

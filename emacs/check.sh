@@ -1,4 +1,5 @@
 #!/bin/sh -e
+set -euxo pipefail
 
 # Adapted from https://github.com/purcell/package-lint/blob/master/run-tests.sh
 EMACS="${EMACS:=emacs}"
@@ -22,17 +23,10 @@ INIT_PACKAGE_EL="(progn \
 "$EMACS" -Q -batch \
          --eval "$INIT_PACKAGE_EL"
 
-# Byte compile, failing on byte compiler errors, or on warnings unless ignored
-if [ -n "${EMACS_LINT_IGNORE+x}" ]; then
-    ERROR_ON_WARN=nil
-else
-    ERROR_ON_WARN=t
-fi
-
 "$EMACS" -Q -batch \
          -L . \
          --eval "$INIT_PACKAGE_EL" \
-         --eval "(setq byte-compile-error-on-warn ${ERROR_ON_WARN})" \
+         --eval "(setq byte-compile-error-on-warn t)" \
          -f batch-byte-compile \
          ${TO_CHECK}
 
@@ -44,4 +38,4 @@ fi
          -L . \
          --eval "(require 'package-lint)" \
          -f package-lint-batch-and-exit \
-         ${TO_CHECK} || [ -n "${EMACS_LINT_IGNORE+x}" ]
+         ${TO_CHECK}
