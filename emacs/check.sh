@@ -26,7 +26,7 @@ INIT_PACKAGE_EL="(progn \
 "$EMACS" -Q -batch \
          -L . \
          --eval "$INIT_PACKAGE_EL" \
-         --eval "(setq byte-compile-error-on-warn t)" \
+         --eval "(setq byte-compile-error-on-warn nil)" \
          -f batch-byte-compile \
          ${TO_CHECK}
 
