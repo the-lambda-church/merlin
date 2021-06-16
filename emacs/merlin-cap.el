@@ -71,14 +71,23 @@ trigger useless merlin calls.")
           . (:exit-function #'merlin-cap--lookup
                             :annotation-function #'merlin-cap--annotate))))
 
-(defalias 'merlin-completion-at-point 'merlin-cap)
+(defalias 'merlin-cap-completion-at-point 'merlin-cap)
+
+(define-obsolete-function-alias 
+  'merlin-completion-at-point
+  'merlin-cap-completion-at-point
+  "2021-06-16")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Register into completion-at-point ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun merlin-cap--setup ()
-  (add-hook 'completion-at-point-functions #'merlin-completion-at-point nil 'local))
+  (add-hook 
+    'completion-at-point-functions 
+    #'merlin-cap-completion-at-point 
+    nil 
+    'local))
 
 (add-hook 'merlin-mode-hook #'merlin-cap--setup)
 (when merlin-mode (merlin-cap--setup))

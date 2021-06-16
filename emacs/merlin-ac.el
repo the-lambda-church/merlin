@@ -132,7 +132,7 @@ wrong then recompute it."
 
 ;; I don't like it beginning by "ac" but it is the only way I found to get it
 ;; working (otherwise the completion menu just closes itself)
-(defun ac-merlin-locate ()
+(defun merlin-ac-locate ()
   "Locate the identifier currently selected in the ac-completion."
   (interactive)
   (when (ac-menu-live-p)
@@ -141,6 +141,11 @@ wrong then recompute it."
     (let ((merlin-locate-in-new-window 'always))
       (merlin-call-locate (ac-selected-candidate)))
     (ac-show-menu)))
+
+(define-obsolete-function-alias 
+  'ac-merlin-locate 
+  'merlin-ac-locate 
+  "2021-06-16")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Register into auto-complete and merlin ;;

@@ -86,13 +86,18 @@
     index))
 
 ;;;###autoload
-(defun merlin-use-merlin-imenu ()
+(defun merlin-imenu-use ()
   "Merlin: use the custom imenu feature from Merlin"
   (interactive)
   ;; change the index function and force a rescan of imenu-index
   (setq imenu-create-index-function 'merlin-imenu-create-index)
   (imenu--cleanup)
   (setq imenu--index-alist nil))
+
+(define-obsolete-function-alias 
+  'merlin-use-merlin-imenu
+  'merlin-imenu-use
+  "2021-06-16")
 
 (provide 'merlin-imenu)
 ;;; merlin-imenu.el ends here
