@@ -6,7 +6,8 @@ git version
     - more accurate type-enclosing for methods (#1328, fixes #1124)
     - fix location of patterns in Occurrences (#1324, fixes
       ocaml/ocaml-lsp#375)
-    - fix location of module definitions done via functors (#1329, fixes #1199)
+    - fix location of module definitions done via functors and aliases (#1329,
+      #1331, fixes #1199, #1228)
     - fix -cmt-path dirs mistakenly added to build path (#1330)
     - add new module holes that can replace module expressions (#1333)
     - add a new command `construct` that builds a list of possible terms when

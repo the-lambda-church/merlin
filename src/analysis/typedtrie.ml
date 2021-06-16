@@ -618,10 +618,14 @@ let rec follow ~remember_loc ~state scopes ?before trie path =
               (Namespaced_path.Namespace.to_string namespace)
               (Namespaced_path.to_unique_string new_prefix);
             let path = Namespaced_path.peal_head_exn path in
-            let new_path = Namespaced_path.rewrite_head ~new_prefix path in
-            remember_loc loc;
-            follow ~remember_loc ~state ~before:loc.Location.loc_start scopes
-              trie new_path
+            begin match Namespaced_path.head path with
+            | None -> Found (loc, doc)
+            | Some _ ->
+              let new_path = Namespaced_path.rewrite_head ~new_prefix path in
+              remember_loc loc;
+              follow ~remember_loc ~state ~before:loc.Location.loc_start scopes
+                trie new_path
+            end
           | Included include_ ->
             remember_loc loc;
             let stampless = Namespaced_path.strip_stamps path in

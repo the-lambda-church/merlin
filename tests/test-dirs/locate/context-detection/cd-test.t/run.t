@@ -32,7 +32,7 @@ Trying them all:
     "value": {
       "file": "$TESTCASE_ROOT/test.ml",
       "pos": {
-        "line": 3,
+        "line": 7,
         "col": 0
       }
     },
