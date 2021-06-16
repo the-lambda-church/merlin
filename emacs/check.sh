@@ -20,8 +20,8 @@ INIT_PACKAGE_EL="(progn \
 
 # Refresh package archives, because the test suite needs to see at least
 # package-lint and cl-lib.
-"$EMACS" -Q -batch \
-         --eval "$INIT_PACKAGE_EL"
+# "$EMACS" -Q -batch \
+#          --eval "$INIT_PACKAGE_EL"
 
 "$EMACS" -Q -batch \
          -L . \
