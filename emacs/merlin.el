@@ -70,7 +70,8 @@
   "The function takes four arguments:
    - the path to the merlin binary
    - the name of the command
-   - the total time spent in the server (or -1 if that information is not available)
+   - the total time spent in the server (or -1 if that information is
+    not available)
    - the resulting state (\"return\", \"failure\" or \"interrupted\")
 Its return value is ignored."
   :group 'merlin :type 'symbol)
