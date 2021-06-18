@@ -56,7 +56,7 @@
         (if (listp r)
             (cl-letf (((symbol-function 'iedit-printable) #'merlin-iedit--printable)
                       ((symbol-function 'iedit-make-occurrences-overlays)
-                       (lambda (a b c)
+                       (lambda (a _b _c)
                          (merlin-iedit--make-occurrences-overlays a))))
               (iedit-start r (point-min) (point-max)))
           (message r))))))

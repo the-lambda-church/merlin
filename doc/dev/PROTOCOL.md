@@ -223,6 +223,17 @@ Entries is the list of possible completion. Each entry is made of:
 - a description, most of the time a type or a definition line, to be put next to the name in completion box
 - optional information which might not fit in the completion box, like signatures for modules or documentation string.
 
+### `construct -position <position> [ -with-values <none|local> -depth <int> ]`
+
+    -position <position>      Position where construct should happen
+    -with-values <none|local> Use values from the environment (defaults to none)
+    -depth <int>              Depth of the search (defaults to 1)
+
+When the position determined by `-position` is a hole (`_`), this command
+  returns a list of possible terms that could replace it given its type.
+When `-with-values` is set to local, values in the current environment will be
+  used in the constructed terms.
+
 ### `document -position <position> [ -identifier <string> ]`
 
     -position <position>  Position to complete
@@ -295,6 +306,11 @@ Returns all known findlib packages as a list of string.
 
 
 Returns supported compiler flags.The purpose of this command is to implement interactive completion of compiler settings in an IDE.
+
+### `holes`
+
+This command will return the ordered list of the positions and types of all
+holes in the current document.
 
 ### `jump -target <string> -position <position>`
 

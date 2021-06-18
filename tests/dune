@@ -1,28 +1,12 @@
-; (rule
-;  (targets merlin-wrapper)
-;  (deps    merlin-wrapper-template)
-;  (action
-;    (progn
-;      (with-stdout-to %{targets}
-;        (run sed -e "s#%%OCAMLMERLIN_PATH%%#ocamlmerlin#"
-;                 -e "s#%%DOT_MERLIN_READER%%#dot-merlin-reader#"
-;             merlin-wrapper-template))
-;      (bash "chmod +x %{targets}"))))
-
-
 (env (_
  (binaries merlin-wrapper)
  (env-vars
   (MERLIN merlin-wrapper)
   (OCAMLC ocamlc))))
 
-(alias
- (name test-deps)
+(cram
+ (applies_to :whole_subtree)
  (deps
   %{bin:merlin-wrapper}
   (package merlin)
   (package dot-merlin-reader)))
-
-(cram
- (applies_to :whole_subtree)
- (deps (alias test-deps)))

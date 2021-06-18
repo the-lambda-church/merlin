@@ -1420,7 +1420,7 @@ let rec type_pat
        try
          type_pat_aux category ~no_existentials ~mode
            ~env sp expected_ty k
-       with Error _ as exn ->
+       with Error _ as exn when mode = Normal ->
          (* We only want to catch error, not internal exceptions such as
             [Need_backtrack], etc. *)
          Msupport.erroneous_type_register expected_ty;

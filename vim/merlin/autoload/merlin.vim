@@ -527,6 +527,104 @@ function! merlin#NextHole()
   MerlinPy merlin.vim_next_hole()
 endfunction
 
+"'''''''''''"
+" CONSTRUCT "
+"'''''''''''"
+
+let b:merlin_construct_depth = 1
+let b:merlin_construct_done = 1
+let b:merlin_construct_lines_before = 0
+
+function! merlin#ConstructComplete(findstart, base)
+  " The function is called in two different ways:
+  " - First the function is called to find the start of the text to be completed.
+  " - Later the function is called to actually find the matches.
+  if a:findstart
+    let start = col('.') - 1
+    return start
+  endif
+  return b:constr_result
+endfunction
+
+function! merlin#ConstructDone()
+  if b:merlin_construct_done
+    " After the subtitution we try to go to the the next hole
+    " TODO Don't if no substitution happened and rewrite the hole
+    call setpos('.', b:construct_saved_pos)
+    let start_line = b:construct_saved_pos[1]
+    let end_line = start_line + line('$') - b:merlin_construct_lines_before
+    MerlinPy merlin.vim_next_hole(vim.eval("start_line"), vim.eval("end_line"))
+    :call feedkeys("\<esc>")
+    :call feedkeys("\<Right>")
+
+    " We reset the depth and the mappings
+    let b:merlin_construct_depth = 1
+    :iunmap <buffer><expr> <c-i>
+    :iunmap <buffer><expr> <c-u>
+
+    " And we hook back the standard completion
+    setlocal omnifunc=merlin#Complete
+  else
+    let b:merlin_construct_done = 1
+  endif
+endfunction
+
+function! merlin#ConstructMore()
+  let b:merlin_construct_depth += 1
+  let b:merlin_construct_done = 0
+
+  " We cancel the previous omnicomplete and trigger a new Construct
+  return "\<c-e>\_\<esc>:MerlinConstruct\<enter>"
+endfunction
+
+function! merlin#ConstructLess()
+  if b:merlin_construct_depth > 1
+    let b:merlin_construct_depth -= 1
+    let b:merlin_construct_done = 0
+
+    " We cancel the previous omnicomplete and trigger a new Construct
+    return "\<c-e>\_\<esc>:MerlinConstruct\<enter>"
+  else
+    return ""
+  endif
+endfunction
+
+function! merlin#Construct()
+  " We save the number of lines in the file for future comparison
+  let b:merlin_construct_lines_before = line('$')
+
+  " We call construct
+  MerlinPy merlin.vim_construct(vim.eval("b:merlin_construct_depth"))
+  let b:construct_saved_pos = getpos(".")
+
+  " If multiple choices where found they are in the b:constr_result list
+  if len(b:constr_result) > 0
+    " We start Omnicomplete with the custom complete function
+    setlocal omnifunc=merlin#ConstructComplete
+    startinsert
+    call feedkeys("\<c-x>\<c-o>")
+
+    " Map keys for more or less
+    " TODO better choice of keys ?
+    :inoremap <buffer><expr> <c-i> merlin#ConstructMore()
+    :inoremap <buffer><expr> <c-u> merlin#ConstructLess()
+
+    " When it's done we switch back to merlin default completion
+    augroup MerlinConstruct
+      au!
+      autocmd CompleteDone <buffer> call merlin#ConstructDone()
+    augroup END
+  endif
+endfunction
+
+function! merlin#PreviousHole()
+  MerlinPy merlin.vim_previous_hole()
+endfunction
+
+function! merlin#NextHole()
+  MerlinPy merlin.vim_next_hole()
+endfunction
+
 function! merlin#Restart()
   MerlinPy merlin.vim_restart()
 endfunction
@@ -602,6 +700,11 @@ function! merlin#Register()
   """ Holes  ---------------------------------------------------------------
   command! -buffer -nargs=0 MerlinNextHole call merlin#NextHole()
   command! -buffer -nargs=0 MerlinPreviousHole call merlin#PreviousHole()
+
+  """ Construct  ---------------------------------------------------------------
+  command! -buffer -nargs=0 MerlinNextHole call merlin#NextHole()
+  command! -buffer -nargs=0 MerlinPreviousHole call merlin#PreviousHole()
+  command! -buffer -nargs=0 MerlinConstruct call merlin#Construct()
 
   """ Locate  ------------------------------------------------------------------
   command! -buffer -complete=customlist,merlin#ExpandPrefix -nargs=? MerlinLocate call merlin#Locate(<q-args>)

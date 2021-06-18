@@ -111,6 +111,13 @@ Add these bindings to rename interactively: >
 
 See https://ocaml.github.io/merlin/destruct.ogv
 
+:MerlinConstruct                                            *:MerlinConstruct*
+
+When called from a hole "_", attempts to construct terms matching the hole's
+type. If only one result is found the hole is replaced immediately. If multiple
+results are found a list will appear. It is possible to ask for more or less
+deep results in that list using the shortcuts  "<c-i>" and "<c-u>".
+
 :MerlinOutline                                                *:MerlinOutline*
 
 Gives an "outline" of the current buffer, i.e. lists all the "definitions"
@@ -120,6 +127,16 @@ definition.
 
 The rendering (and interactivity) is provided by
 [ctrl-p](https://github.com/ctrlpvim/ctrlp.vim).
+
+:MerlinNextHole                                              *:MerlinNextHole*
+
+Moves the cursor forward to the closest hole "_". If there is no hole after the
+cursor the search will restart at the beginning of the buffer.
+
+:MerlinPreviousHole                                      *:MerlinPreviousHole*
+
+Moves the cursor backwards to the closest hole "_". If there is no hole before
+the cursor the search will restart at the end of the buffer.
 
 :MerlinILocate                                                *:MerlinILocate*
 

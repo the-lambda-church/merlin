@@ -13,7 +13,7 @@
     (goto-char loc)
     (buffer-substring (line-beginning-position) (line-end-position))))
 
-(cl-defmethod xref-backend-references ((_backend (eql merlin-xref)) symbol)
+(cl-defmethod xref-backend-references ((_backend (eql merlin-xref)) _symbol)
   (mapcar
    (lambda (loc)
      (let ((pt (merlin-make-point (alist-get 'start loc))))
@@ -21,8 +21,8 @@
                   (xref-make-buffer-location (current-buffer) pt))))
    (merlin--occurrences)))
 
-(cl-defmethod xref-backend-definitions ((_backend (eql merlin-xref)) symbol)
-  (let* ((loc (merlin-locate))
+(cl-defmethod xref-backend-definitions ((_backend (eql merlin-xref)) _symbol)
+  (let* ((loc (merlin-call-locate))
          (file (alist-get 'file loc))
          (pos (alist-get 'pos loc))
          (line (alist-get 'line pos))

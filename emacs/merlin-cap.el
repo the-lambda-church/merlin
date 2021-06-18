@@ -27,7 +27,7 @@ trigger useless merlin calls.")
 
 ;; Internal functions
 
-(defun merlin-cap--lookup (string state)
+(defun merlin-cap--lookup (string _state)
   "Lookup the entry STRING inside the completion table."
   (let ((ret (assoc string merlin-cap--table)))
     (if ret (message "%s%s" (car ret) (cdr ret)))))

@@ -644,6 +644,30 @@ let dispatch pipeline (type a) : a Query_protocol.t -> a =
     in
     List.concat_map ~f:loc_and_types_of_holes nodes
 
+  | Construct (pos, with_values, depth) ->
+    let values_scope = match with_values with
+      | Some `None | None -> Construct.Null
+      | Some `Local -> Construct.Local
+    in
+    let keywords = Mpipeline.reader_lexer_keywords pipeline in
+    let typer = Mpipeline.typer_result pipeline in
+    let typedtree = Mtyper.get_typedtree typer in
+    let pos = Mpipeline.get_lexing_pos pipeline pos in
+    let structures = Mbrowse.enclosing pos
+      [Mbrowse.of_typedtree typedtree] in
+    begin match structures with
+    | (_, (Browse_raw.Module_expr { mod_desc = Tmod_hole; _ } as node_for_loc))
+      :: (_, node) :: parents ->
+        let loc = Mbrowse.node_loc node_for_loc in
+        (loc, Construct.node ~keywords ?depth ~values_scope node)
+    | (_,  (Browse_raw.Expression { exp_desc = Texp_hole; _ } as node))
+      :: parents ->
+      let loc = Mbrowse.node_loc node in
+      (loc, Construct.node ~keywords ?depth ~values_scope node)
+    | (_, node) :: _ -> raise Construct.Not_a_hole
+    | [] -> raise No_nodes
+    end
+
   | Outline ->
     let typer = Mpipeline.typer_result pipeline in
     let browse = Mbrowse.of_typedtree (Mtyper.get_typedtree typer) in

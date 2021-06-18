@@ -1267,8 +1267,8 @@ strictly within, or nil if there is no such element."
   "Returns the first `hole` of the list such that
     `(funcall comp hole current-point)`"
   (when holes
-    (let* ((head (first holes))
-           (tail (rest holes))
+    (let* ((head (car holes))
+           (tail (cdr holes))
            (start (merlin-lookup 'start head))
            (hole-point (merlin-make-point start)))
       (if (funcall comp hole-point current-point)

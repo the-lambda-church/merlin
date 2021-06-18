@@ -139,7 +139,7 @@ wrong then recompute it."
     (when (popup-hidden-p ac-menu)
       (ac-show-menu))
     (let ((merlin-locate-in-new-window 'always))
-      (merlin-locate (ac-selected-candidate)))
+      (merlin-call-locate (ac-selected-candidate)))
     (ac-show-menu)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

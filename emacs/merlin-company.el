@@ -109,7 +109,7 @@
       (doc-buffer (merlin-company--doc-buffer arg))
       (location
        (ignore-errors
-         (let ((data (merlin-locate arg)))
+         (let ((data (merlin-call-locate arg)))
            (when (listp data)
              (let ((filename (merlin-lookup 'file data (buffer-file-name)))
                    (linum (cdr (assoc 'line (assoc 'pos data)))))

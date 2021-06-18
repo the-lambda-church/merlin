@@ -140,6 +140,16 @@ let dump (type a) : a t -> json =
       "end", mk_position pos_end;
     ]
   | Holes -> mk "holes" []
+  | Construct (pos, with_values, depth) ->
+    let depth = Option.value ~default:1 depth in
+    mk "construct" [
+      "position", mk_position pos;
+      "with_values", (match with_values with
+      | Some `None | None -> `String "none"
+      | Some `Local -> `String "local"
+      );
+      "depth", `Int depth
+    ]
   | Outline -> mk "outline" []
   | Errors { lexing; parsing; typing } ->
     let args =
@@ -383,7 +393,15 @@ let json_of_response (type a) (query : a t) (response : a) : json =
     `List [ assoc ; `String str ]
   | Holes, locations ->
     `List (List.map locations
-              ~f:(fun (loc, typ) -> with_location loc ["type", `String typ]))
+            ~f:(fun (loc, typ) -> with_location loc ["type", `String typ]))
+  | Construct _, ({ Location. loc_start ; loc_end; _ }, strs) ->
+    let assoc =
+      `Assoc [
+        "start", Lexing.json_of_position loc_start  ;
+        "end", Lexing.json_of_position loc_end ;
+      ]
+    in
+    `List [ assoc ; `List (List.map ~f:Json.string strs) ]
   | Outline, outlines ->
     `List (json_of_outline outlines)
   | Shape _, shapes ->

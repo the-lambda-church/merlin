@@ -102,6 +102,41 @@ The return value has the shape \
     end
   ;
 
+  command "construct"
+    ~spec: [
+      arg "-position" "<position> Position where construct should happen"
+          (marg_position (fun pos (_pos, with_values, depth) ->
+            (pos, with_values, depth)));
+      optional "-with-values" "<none|local> Use values from the environment"
+        (Marg.param "<none|local>"
+          (fun with_values (pos, _with_values, depth) ->
+            match with_values with
+            | "none" -> (pos, None, depth)
+            | "local" -> (pos, Some `Local, depth)
+            | _ -> failwith "-with-values should be one of none or local"
+          ));
+      optional "-depth" "<int> Depth for the search (defaults to 1)"
+          (Marg.param "int" (fun depth (pos, with_values,_depth) ->
+              match int_of_string depth with
+              | depth ->
+                if depth >= 1 then (pos, with_values, Some depth)
+                else failwith "depth should be a positive integer"
+              | exception _ ->
+                failwith "depth should be a positive integer"
+            ));
+    ]
+~doc:"The construct command returns a list of expressions that could fill a
+hole at '-position' given its infered type. The '-depth' parameter allows to
+recursively construct terms. Note that when '-depth' > 1 partial results of
+inferior depth will not be returned."
+    ~default:(`Offset (-1), None, None)
+    begin fun buffer (pos, with_values, max_depth) ->
+      match pos with
+      | `Offset (-1) -> failwith "-position <pos> is mandatory"
+      | pos -> run buffer (Query_protocol.Construct (pos, with_values, max_depth))
+    end
+  ;
+
   command "complete-prefix"
     ~spec: [
       arg "-position" "<position> Position to complete"
