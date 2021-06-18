@@ -1,4 +1,4 @@
-;;; merlin-iedit.el --- Merlin and iedit integration.   -*- coding: utf-8; lexical-binding: t -*-
+;;; merlin-iedit.el --- Merlin and iedit integration   -*- coding: utf-8; lexical-binding: t -*-
 ;; Licensed under the MIT license.
 
 ;; Author: Simon Castellan <simon.castellan(_)iuwt.fr>
@@ -62,4 +62,4 @@
           (message r))))))
 
 (provide 'merlin-iedit)
-;;; merlin.el ends here
+;;; merlin-iedit.el ends here

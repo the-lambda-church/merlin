@@ -1,4 +1,4 @@
-;;; merlin-cap.el --- Merlin and completion-at-point integration.   -*- coding: utf-8; lexical-binding: t -*-
+;;; merlin-cap.el --- Merlin and completion-at-point integration   -*- coding: utf-8; lexical-binding: t -*-
 ;; Licensed under the MIT license.
 
 ;; Author: Simon Castellan <simon.castellan(_)iuwt.fr>
@@ -7,11 +7,14 @@
 ;; Created: 15 May 2015
 ;; Version: 0.1
 ;; Keywords: ocaml languages
+;; Package-Requires: ((emacs "25.1") (merlin "3"))
 ;; URL: http://github.com/ocaml/merlin
 
-(require 'merlin)
+;;; Commentary:
 
 ;; Call merlin-completion-at-point when you want merlin guided completion-at-point.
+
+(require 'merlin)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -68,14 +71,23 @@ trigger useless merlin calls.")
           . (:exit-function #'merlin-cap--lookup
                             :annotation-function #'merlin-cap--annotate))))
 
-(defalias 'merlin-completion-at-point 'merlin-cap)
+(defalias 'merlin-cap-completion-at-point 'merlin-cap)
+
+(define-obsolete-function-alias 
+  'merlin-completion-at-point
+  'merlin-cap-completion-at-point
+  "2021-06-16")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Register into completion-at-point ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun merlin-cap--setup ()
-  (add-hook 'completion-at-point-functions #'merlin-completion-at-point nil 'local))
+  (add-hook 
+    'completion-at-point-functions 
+    #'merlin-cap-completion-at-point 
+    nil 
+    'local))
 
 (add-hook 'merlin-mode-hook #'merlin-cap--setup)
 (when merlin-mode (merlin-cap--setup))

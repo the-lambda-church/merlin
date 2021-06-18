@@ -70,7 +70,8 @@
   "The function takes four arguments:
    - the path to the merlin binary
    - the name of the command
-   - the total time spent in the server (or -1 if that information is not available)
+   - the total time spent in the server (or -1 if that information is
+    not available)
    - the resulting state (\"return\", \"failure\" or \"interrupted\")
 Its return value is ignored."
   :group 'merlin :type 'symbol)
@@ -215,8 +216,7 @@ The association list can contain the following optional keys:
 
 - `name': a short name for this configuration, displayed in user notifications.
 
-- `do-not-cache-config': if set, refreshes the config on every command"
-)
+- `do-not-cache-config': if set, refreshes the config on every command")
 
 (defvar-local merlin-buffer-packages nil
    "List of packages loaded in the buffer")
@@ -1842,8 +1842,7 @@ Empty string defaults to jumping to all these."
       '(menu-item "Version" merlin-version
                   :help "Print version of the merlin binary."))
     (define-key merlin-map [menu-bar merlin] (cons "Merlin" merlin-menu-map))
-    merlin-map
-    ))
+    merlin-map))
 
 (defun merlin-can-handle-buffer ()
   "Simple sanity check (used to avoid running merlin on, e.g., completion buffer)."

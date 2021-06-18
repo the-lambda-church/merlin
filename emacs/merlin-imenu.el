@@ -1,4 +1,4 @@
-;;; merlin-imenu.el --- Merlin and imenu integration.   -*- coding: utf-8; lexical-binding: t -*-
+;;; merlin-imenu.el --- Merlin and imenu integration   -*- coding: utf-8; lexical-binding: t -*-
 ;; Licensed under the MIT license.
 
 ;; Author: tddsg (Ta Quang Trung)
@@ -7,8 +7,13 @@
 ;;   - v0.1: July 2016
 ;;   - v0.2: 27 April 2017
 ;;   - v0.3: 21 August 2019
-;; Keywords: ocaml, imenu, merlin
-;; URL:
+;; Keywords: ocaml, imenu, merlin, languages
+;; Package-Requires: ((emacs "24.4"))
+;; URL: http://github.com/ocaml/merlin
+
+;;; Commentary:
+
+;; Merlin and imenu integration.
 
 (require 'imenu)
 (require 'subr-x)
@@ -81,13 +86,18 @@
     index))
 
 ;;;###autoload
-(defun merlin-use-merlin-imenu ()
+(defun merlin-imenu-use ()
   "Merlin: use the custom imenu feature from Merlin"
   (interactive)
   ;; change the index function and force a rescan of imenu-index
   (setq imenu-create-index-function 'merlin-imenu-create-index)
   (imenu--cleanup)
   (setq imenu--index-alist nil))
+
+(define-obsolete-function-alias 
+  'merlin-use-merlin-imenu
+  'merlin-imenu-use
+  "2021-06-16")
 
 (provide 'merlin-imenu)
 ;;; merlin-imenu.el ends here
