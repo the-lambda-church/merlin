@@ -16,7 +16,6 @@ depends: [
   "yojson" {>= "1.6.0"}
   "ocamlfind" {>= "1.6.0"}
   "csexp" {>= "1.2.3"}
-  "result" {>= "1.5"}
 ]
 description:
   "Helper process: reads .merlin files and gives the normalized content to merlin"

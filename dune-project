@@ -4,4 +4,3 @@
 
 (cram enable)
 (formatting disabled)
-(implicit_transitive_deps false)
