@@ -92,6 +92,9 @@ module Path_utils : sig
     env:Env.t ->
     ?name:string ->
     env_check:(Longident.t -> Env.t -> 'a) -> Path.t -> Longident.t
+
+  (* Return wheter the given path is opened in the given environment *)
+  val is_opened : Env.t -> Path.t -> bool 
 end
 
 val node :
