@@ -28,6 +28,7 @@ let () =
     | _ -> None
   )
 module Util = struct
+  open Destruct.Path_utils
   open Types
 
   let predef_types =
@@ -61,8 +62,8 @@ module Util = struct
     in
     tbl
 
-  let prefix env ~env_check path name =
-    Destruct.Path_utils.to_shortest_lid ~env ~env_check ~name path
+  let prefix env ~env_check path name = 
+    to_shortest_lid ~env ~env_check ~name path
 
   let var_of_id id = Location.mknoloc @@ Ident.name id
 
@@ -73,22 +74,20 @@ module Util = struct
   let unifiable env type_expr type_expected = 
     let snap = Btype.snapshot () in
     try
-      Ctype.unify_gadt
-        ~equations_level:0
-        ~allow_recursive:true
-        (ref env) type_expected type_expr
-      |> ignore; 
+      Ctype.unify env type_expected type_expr |> ignore; 
       Some snap
     with Ctype.Unify _  -> 
       (* Unification failure *) 
       Btype.backtrack snap;
       None
-
+  
+  let is_in_stdlib path =
+    Path.head path |> Ident.name = "Stdlib" 
 
   (** [find_values_for_type env typ] searches the environment [env] for
   {i values} with a return type compatible with [typ] *)
   let find_values_for_type env typ =
-    let aux name path descr acc =
+    let aux name path value_description acc =
       (* [check_type| checks return type compatibility and lists parameters *)
       let rec check_type type_expr params =
         let type_expr = Btype.repr type_expr in
@@ -106,13 +105,23 @@ module Util = struct
       end
       in
       (* TODO we should probably sort the results better *)
-      (* Also the Path filter is too restrictive. *)
-      match path, check_type descr.val_type [] with
-      | Path.Pident _, Some params ->
-        (name, path, descr, params) :: acc
+      match is_in_stdlib path, check_type value_description.val_type [] with
+      | false, Some params ->
+        Path.Map.add path (name, value_description, params) acc
       | _, _ -> acc
     in
-    Env.fold_values aux None env []
+    (* We look for values in the current scope and in local unonpend submodules.
+      We also exclude the Stdlib modules from the search. *)
+    let fold_values path acc = Env.fold_values aux path env acc in
+    let init = fold_values None Path.Map.empty in
+    Env.fold_modules (fun name path _module_decl acc ->
+      if not (is_in_stdlib path) && not (is_opened env path) then 
+        (* We ignore opened modules. That means that is a value of an opened
+          module has been shadowed we won't suggest the one in the opened
+          module. *) 
+        fold_values (Some (Untypeast.lident_of_path path)) acc
+      else acc) None env init
+      
 
   (** The idents_table is used to keep track of already used names when
   generating function arguments in the same expression *)
@@ -169,7 +178,7 @@ module Gen = struct
   let hole = Ast_helper.Exp.hole ()
 
   (* [make_value] generates the PAST repr of a value applied to holes *)
-  let make_value env (name, path, value_description, params) =
+  let make_value env (path, (name, value_description, params)) =
     let open Ast_helper in
     let env_check = Env.find_value_by_name in
     let lid = Location.mknoloc (Util.prefix env ~env_check path name) in
@@ -497,8 +506,8 @@ module Gen = struct
       in
       let matching_values =
         if values_scope = Local then
-          List.map (Util.find_values_for_type env typ)
-            ~f:(make_value env) |> List.rev
+          Path.Map.bindings (Util.find_values_for_type env typ)
+          |> List.map ~f:(make_value env)
         else []
       in
       List.append constructed_from_type matching_values
