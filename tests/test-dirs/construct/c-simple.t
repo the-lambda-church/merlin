@@ -70,9 +70,9 @@ With values:
     [
       "(Some _)",
       "None",
+      "nice_candidate",
       "(nice_candidate_with_arg _)",
-      "(nice_candidate_with_labeled_arg ~x:_)",
-      "nice_candidate"
+      "(nice_candidate_with_labeled_arg ~x:_)"
     ]
   ]
 
@@ -95,9 +95,9 @@ With depth 2 and values:
       "(Some 0)",
       "None",
       "(Some y)",
+      "nice_candidate",
       "(nice_candidate_with_arg _)",
-      "(nice_candidate_with_labeled_arg ~x:_)",
-      "nice_candidate"
+      "(nice_candidate_with_labeled_arg ~x:_)"
     ]
   ]
 
@@ -427,8 +427,8 @@ only v1 should appear
   [
     "(App (_, _))",
     "(Int _)",
-    "x",
-    "v1"
+    "v1",
+    "x"
   ]
 
 ###################
