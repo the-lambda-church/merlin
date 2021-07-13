@@ -100,17 +100,26 @@ let prepend_config ~dir:cwd (directives : directive list) config =
 
 module Configurator = struct
   type t =
+    | Dot_merlin_custom
     | Dot_merlin
     | Dune
 
   let of_string_opt = function
+    | ".merlin.custom" ->
+      Some Dot_merlin_custom
     | ".merlin" ->
       Some Dot_merlin
     | "dune-project" | "dune-workspace" ->
       Some Dune
     | _ -> None
 
+  let dot_merlin_custom =
+    try
+      Unix.getenv "DOT_MERLIN_CUSTOM_READER"
+    with Not_found -> "dot-merlin-custom-reader"
+
   let to_string = function
+    | Dot_merlin_custom -> dot_merlin_custom
     | Dot_merlin -> "dot-merlin-reader"
     | Dune -> "dune"
 
@@ -127,6 +136,10 @@ module Configurator = struct
     let start ~dir cfg =
       let prog, args =
         match cfg with
+        | Dot_merlin_custom ->
+          let prog = dot_merlin_custom in
+          let prog_name = Filename.basename prog in
+          prog, [| prog_name |]
         | Dot_merlin ->
           let prog = "dot-merlin-reader" in
           prog, [| prog |]
@@ -284,6 +297,9 @@ let get_config { workdir; process_dir; configurator } path_abs =
         "A problem occured with merlin external configuration reader. %s If \
          the problem persists, please file an issue on Merlin's tracker."
         (match configurator with
+        | Dot_merlin_custom ->
+          Printf.sprintf "Check that `%s` is installed."
+            Configurator.dot_merlin_custom
         | Dot_merlin -> "Check that `dot-merlin-reader` is installed."
         | Dune -> "Check that `dune` is installed and up-to-date.")
       in
@@ -296,6 +312,10 @@ let get_config { workdir; process_dir; configurator } path_abs =
       let error = Printf.sprintf
         "Merlin could not load its configuration from the external reader. %s"
         (match configurator with
+        | Dot_merlin_custom ->
+          Printf.sprintf
+            "If the problem persists, please contact the maintainer of `%s`."
+            Configurator.dot_merlin_custom
         | Dot_merlin -> "If the problem persists, please file an issue on \
           Merlin's tracker."
         | Dune -> "Building your project with `dune` might solve this issue.")
@@ -309,9 +329,9 @@ let find_project_context start_dir =
     always use that starting folder as the workdir.  *)
   let map_workdir dir = function
     | Some dir -> Some dir
-    | None -> 
+    | None ->
       let fnames = List.map ~f:(Filename.concat dir) ["dune"; "dune-file"] in
-      if List.exists ~f:(fun fname -> 
+      if List.exists ~f:(fun fname ->
         Sys.file_exists fname && not (Sys.is_directory fname)) fnames
       then Some dir else None
   in
@@ -320,7 +340,7 @@ let find_project_context start_dir =
     try
       Some (
         List.find_map [
-            ".merlin"; "dune-project"; "dune-workspace"
+          ".merlin.custom"; ".merlin"; "dune-project"; "dune-workspace"
           ]
           ~f:(fun f ->
             let fname = Filename.concat dir f in
@@ -328,7 +348,7 @@ let find_project_context start_dir =
             then
               (* When starting [dot-merlin-reader] from [dir]
                 the workdir is always [dir] *)
-              let workdir = if f = ".merlin" then None else workdir in
+              let workdir = if f = ".merlin" || f = ".merlin.custom" then None else workdir in
               let workdir = Option.value ~default:dir workdir in
               Some ({
                 workdir;
