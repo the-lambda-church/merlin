@@ -49,6 +49,8 @@ let () =
   )
 
 module Path_utils : sig
+  val is_opened : Env.t -> Path.t -> bool 
+
   val to_shortest_lid :
     env:Env.t ->
     ?name:string ->
@@ -62,6 +64,8 @@ end = struct
         |> Option.value ~default:acc
     in
     aux [] env
+
+  let is_opened env path = List.mem path ~set:(opens (Env.summary env))
 
   let rec to_shortest_lid ~(opens : Path.t list) = function
     | Path.Pdot (path, name) when List.exists ~f:(Path.same path) opens ->
