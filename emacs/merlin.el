@@ -1754,9 +1754,10 @@ Empty string defaults to jumping to all these."
                                    "-action" mode)))
       (let ((bounds (merlin--make-bounds occurrence))
             (content (cdr (assoc 'content occurrence))))
-        (goto-char (car bounds))
-        (delete-char (- (cdr bounds) (car bounds)))
-        (insert content)))))
+        (unless (equal content (buffer-substring (car bounds) (cdr bounds)))
+          (goto-char (car bounds))
+          (delete-char (- (cdr bounds) (car bounds)))
+          (insert content))))))
 
 (defun merlin-refactor-open ()
   "Refactor open statement under cursor: unqualify paths"
