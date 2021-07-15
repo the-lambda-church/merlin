@@ -63,6 +63,18 @@ end) = struct
       Hashtbl.remove cache filename;
       raise exn
 
+  let check filename =
+    let fid = File_id.get filename in
+    match Hashtbl.find cache filename with
+    | exception Not_found -> false
+    | (fid', latest_use, _) ->
+      if File_id.check fid fid' then begin
+        latest_use := Unix.time ();
+        true
+      end else begin
+        false
+      end
+
   let get_cached_entry filename =
     let fid = File_id.get filename in
     let title = "get_cached_entry" in

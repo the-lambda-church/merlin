@@ -8,6 +8,7 @@ git version
     - fix location of module definitions done via functors (#1329, fixes #1199)
     - fix -cmt-path dirs mistakenly added to build path (#1330)
     - add new module holes that can replace module expressions (#1333)
+    - improve load path performance (#1323)
     - add a new command `construct` that builds a list of possible terms when
       called on a typed hole (#1318)
     - `refactor-open qualify` improvements (#1313)

@@ -139,7 +139,6 @@ let run config parsetree =
     Mocaml.flush_caches ();
     Local_store.reset ();
   );
-  Mocaml.setup_config config;
   let caught = ref [] in
   Msupport.catch_errors Mconfig.(config.ocaml.warnings) caught @@ fun () ->
   Typecore.reset_delayed_checks ();

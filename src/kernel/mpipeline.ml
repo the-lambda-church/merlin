@@ -155,17 +155,16 @@ let process
     )) in
   let reader = timed_lazy reader_time (lazy (
       let lazy source = source in
-      let result = Mreader.parse ?for_completion config source in
-      let config = result.Mreader.config in
-      let config = Mreader.apply_directives config result.Mreader.parsetree in
       let config = Mconfig.normalize config in
+      Mocaml.setup_config config;
+      let result = Mreader.parse ?for_completion config source in
       result, config
     )) in
   let ppx = timed_lazy ppx_time (lazy (
       let lazy ({Mreader.parsetree; _}, config) = reader in
       let caught = ref [] in
       Msupport.catch_errors Mconfig.(config.ocaml.warnings) caught @@ fun () ->
-      let config, parsetree = Mppx.rewrite config parsetree in
+      let parsetree = Mppx.rewrite config parsetree in
       { Ppx. config; parsetree; errors = !caught }
     )) in
   let typer = timed_lazy typer_time (lazy (
