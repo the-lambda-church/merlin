@@ -1493,6 +1493,8 @@ loading"
                              "-look-for" merlin-locate-preference)))
     (unless result
       (error "Not found. (Check *Messages* for potential errors)"))
+    (when (stringp result)
+      (user-error "%s" result))
     (unless (listp result)
       (error "%S" result))
     result))
@@ -1519,6 +1521,8 @@ loading"
                              "-position" (merlin/unmake-point (point)))))
     (unless result
       (error "Not found. (Check *Messages* for potential errors)"))
+    (when (stringp result)
+      (user-error "%s" result))
     (unless (listp result)
       (error "%S" result))
     (merlin--goto-file-and-point result)))
@@ -1548,8 +1552,10 @@ loading"
                              "-target" target)))
     (unless result
       (error "Not found. (Check *Messages* for potential errors)"))
+    (when (stringp result)
+      (user-error "%s" result))
     (unless (listp result)
-      (error result))
+      (error "%S" result))
     result))
 
 (defun merlin-jump (&optional target)
