@@ -406,9 +406,9 @@ containing fields file, line and col."
     (overlay-put overlay 'face face)
     (overlay-put overlay 'merlin-kind 'highlight)
     (if merlin-allow-sit-for
-        (unwind-protect (sit-for 60) (delete-overlay overlay)))
+        (unwind-protect (sit-for 60) (delete-overlay overlay))
       (run-with-idle-timer 0.5 nil
-        (lambda () (delete-overlay overlay)))))
+        (lambda () (delete-overlay overlay))))))
 
 ;; Position management
 
