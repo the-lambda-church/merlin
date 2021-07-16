@@ -1537,8 +1537,8 @@ loading"
 (defun merlin-locate-type ()
   "Locate the type of the expression under point."
   (interactive)
-  (let ((result (merlin/call "locate-type"
-                             "-position" (merlin/unmake-point (point)))))
+  (let ((result (merlin-call "locate-type"
+                             "-position" (merlin-unmake-point (point)))))
     (unless result
       (error "Not found. (Check *Messages* for potential errors)"))
     (when (stringp result)
