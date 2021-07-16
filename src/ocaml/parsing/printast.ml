@@ -224,7 +224,11 @@ and pattern i ppf x =
       list i pattern ppf l;
   | Ppat_construct (li, po) ->
       line i ppf "Ppat_construct %a\n" fmt_longident_loc li;
-      option i pattern ppf po;
+      option i
+        (fun i ppf (vl, p) ->
+          list i string_loc ppf vl;
+          pattern i ppf p)
+        ppf po
   | Ppat_variant (l, po) ->
       line i ppf "Ppat_variant \"%s\"\n" l;
       option i pattern ppf po;
@@ -728,6 +732,10 @@ and signature_item i ppf x =
       line i ppf "Psig_modtype %a\n" fmt_string_loc x.pmtd_name;
       attributes i ppf x.pmtd_attributes;
       modtype_declaration i ppf x.pmtd_type
+  | Psig_modtypesubst x ->
+      line i ppf "Psig_modtypesubst %a\n" fmt_string_loc x.pmtd_name;
+      attributes i ppf x.pmtd_attributes;
+      modtype_declaration i ppf x.pmtd_type
   | Psig_open od ->
       line i ppf "Psig_open %a %a\n" fmt_override_flag od.popen_override
         fmt_longident_loc od.popen_expr;
@@ -769,6 +777,14 @@ and with_constraint i ppf x =
       line i ppf "Pwith_modsubst %a = %a\n"
         fmt_longident_loc lid1
         fmt_longident_loc lid2;
+  | Pwith_modtype (lid1, mty) ->
+      line i ppf "Pwith_modtype %a\n"
+        fmt_longident_loc lid1;
+      module_type (i+1) ppf mty
+  | Pwith_modtypesubst (lid1, mty) ->
+     line i ppf "Pwith_modtypesubst %a\n"
+        fmt_longident_loc lid1;
+      module_type (i+1) ppf mty
 
 and module_expr i ppf x =
   line i ppf "module_expr %a\n" fmt_location x.pmod_loc;

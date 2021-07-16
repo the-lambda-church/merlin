@@ -245,9 +245,15 @@ and pattern : type k . _ -> _ -> k general_pattern -> unit = fun i ppf x ->
   | Tpat_tuple (l) ->
       line i ppf "Tpat_tuple\n";
       list i pattern ppf l;
-  | Tpat_construct (li, _, po) ->
+  | Tpat_construct (li, _, po, vto) ->
       line i ppf "Tpat_construct %a\n" fmt_longident li;
       list i pattern ppf po;
+      option i
+        (fun i ppf (vl,ct) ->
+          let names = List.map (fun {txt} -> "\""^Ident.name txt^"\"") vl in
+          line i ppf "[%s]\n" (String.concat "; " names);
+          core_type i ppf ct)
+        ppf vto
   | Tpat_variant (l, po, _) ->
       line i ppf "Tpat_variant \"%s\"\n" l;
       option i pattern ppf po;
@@ -734,6 +740,10 @@ and signature_item i ppf x =
       line i ppf "Tsig_modtype \"%a\"\n" fmt_ident x.mtd_id;
       attributes i ppf x.mtd_attributes;
       modtype_declaration i ppf x.mtd_type
+  | Tsig_modtypesubst x ->
+      line i ppf "Tsig_modtypesubst \"%a\"\n" fmt_ident x.mtd_id;
+      attributes i ppf x.mtd_attributes;
+      modtype_declaration i ppf x.mtd_type
   | Tsig_open od ->
       line i ppf "Tsig_open %a %a\n"
         fmt_override_flag od.open_override
@@ -776,6 +786,12 @@ and with_constraint i ppf x =
       type_declaration (i+1) ppf td;
   | Twith_module (li,_) -> line i ppf "Twith_module %a\n" fmt_path li;
   | Twith_modsubst (li,_) -> line i ppf "Twith_modsubst %a\n" fmt_path li;
+  | Twith_modtype mty ->
+      line i ppf "Twith_modtype\n";
+      module_type (i+1) ppf mty
+  | Twith_modtypesubst mty ->
+      line i ppf "Twith_modtype\n";
+      module_type (i+1) ppf mty
 
 and module_expr i ppf x =
   line i ppf "module_expr %a\n" fmt_location x.mod_loc;
@@ -945,4 +961,5 @@ let interface ppf x = list 0 signature_item ppf x.sig_items;;
 
 let implementation ppf x = list 0 structure_item ppf x.str_items;;
 
-let implementation_with_coercion ppf (x, _) = implementation ppf x
+let implementation_with_coercion ppf Typedtree.{structure; _} =
+  implementation ppf structure

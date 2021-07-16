@@ -329,17 +329,25 @@ let pattern : type k . _ -> k T.general_pattern -> _ = fun sub pat ->
     | Tpat_constant cst -> Ppat_constant (constant cst)
     | Tpat_tuple list ->
         Ppat_tuple (List.map (sub.pat sub) list)
-    | Tpat_construct (lid, _, args) ->
+    | Tpat_construct (lid, _, args, vto) ->
+        let vl, tyo =
+          match vto with
+            None -> [], None
+          | Some (vl, ty) ->
+              List.map (fun x -> {x with txt = Ident.name x.txt}) vl,
+              Some (sub.typ sub ty)
+        in
+        let arg =
+          match args with
+            []    -> None
+          | [arg] -> Some (sub.pat sub arg)
+          | args  -> Some (Pat.tuple ~loc (List.map (sub.pat sub) args))
+        in
         Ppat_construct (map_loc sub lid,
-          (match args with
-              [] -> None
-            | [arg] -> Some (sub.pat sub arg)
-            | args ->
-                Some
-                  (Pat.tuple ~loc
-                     (List.map (sub.pat sub) args)
-                  )
-          ))
+          match tyo, arg with
+          | Some ty, Some arg ->
+              Some (vl, Pat.mk ~loc (Ppat_constraint (arg, ty)))
+          | _ -> None)
     | Tpat_variant (label, pato, _) ->
         Ppat_variant (label, Option.map (sub.pat sub) pato)
     | Tpat_record (list, closed) ->
@@ -552,6 +560,8 @@ let signature_item sub item =
         Psig_recmodule (List.map (sub.module_declaration sub) list)
     | Tsig_modtype mtd ->
         Psig_modtype (sub.module_type_declaration sub mtd)
+    | Tsig_modtypesubst mtd ->
+        Psig_modtypesubst (sub.module_type_declaration sub mtd)
     | Tsig_open od ->
         Psig_open (sub.open_description sub od)
     | Tsig_include incl ->
@@ -606,7 +616,7 @@ let functor_parameter sub : functor_parameter -> Parsetree.functor_parameter =
   | Unit -> Unit
   | Named (_, name, mtype) -> Named (name, sub.module_type sub mtype)
 
-let module_type sub mty =
+let module_type (sub : mapper) mty =
   let loc = sub.location sub mty.mty_loc in
   let attrs = sub.attributes sub mty.mty_attributes in
   let desc = match mty.mty_desc with
@@ -629,12 +639,18 @@ let with_constraint sub (_path, lid, cstr) =
       Pwith_type (map_loc sub lid, sub.type_declaration sub decl)
   | Twith_module (_path, lid2) ->
       Pwith_module (map_loc sub lid, map_loc sub lid2)
+  | Twith_modtype mty ->
+      let mty = sub.module_type sub mty in
+      Pwith_modtype (map_loc sub lid,mty)
   | Twith_typesubst decl ->
      Pwith_typesubst (map_loc sub lid, sub.type_declaration sub decl)
   | Twith_modsubst (_path, lid2) ->
       Pwith_modsubst (map_loc sub lid, map_loc sub lid2)
+  | Twith_modtypesubst mty ->
+      let mty = sub.module_type sub mty in
+      Pwith_modtypesubst (map_loc sub lid, mty)
 
-let module_expr sub mexpr =
+let module_expr (sub : mapper) mexpr =
   let loc = sub.location sub mexpr.mod_loc in
   let attrs = sub.attributes sub mexpr.mod_attributes in
   match mexpr.mod_desc with
@@ -884,10 +900,10 @@ let default_mapper =
     object_field = object_field ;
   }
 
-let untype_structure ?(mapper=default_mapper) structure =
+let untype_structure ?(mapper : mapper = default_mapper) structure =
   mapper.structure mapper structure
 
-let untype_signature ?(mapper=default_mapper) signature =
+let untype_signature ?(mapper : mapper = default_mapper) signature =
   mapper.signature mapper signature
 
 (* Merlin *)

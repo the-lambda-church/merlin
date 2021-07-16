@@ -20,7 +20,7 @@ val interface : formatter -> signature -> unit;;
 val implementation : formatter -> structure -> unit;;
 
 val implementation_with_coercion :
-    formatter -> (structure * module_coercion) -> unit;;
+  formatter -> Typedtree.implementation -> unit;;
 
 (* Added by merlin for debugging purposes *)
 val pattern : int -> formatter -> _ general_pattern -> unit

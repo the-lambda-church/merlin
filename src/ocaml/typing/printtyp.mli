@@ -150,6 +150,22 @@ val signature: formatter -> signature -> unit
 val tree_of_modtype: module_type -> out_module_type
 val tree_of_modtype_declaration:
     Ident.t -> modtype_declaration -> out_sig_item
+
+(** Print a list of functor parameters while adjusting the printing environment
+    for each functor argument.
+
+    Currently, we are disabling disambiguation for functor argument name to
+    avoid the need to track the moving association between identifiers and
+    syntactic names in situation like:
+
+    got: (X: sig module type T end) (Y:X.T) (X:sig module type T end) (Z:X.T)
+    expect: (_: sig end) (Y:X.T) (_:sig end) (Z:X.T)
+*)
+val functor_parameters:
+  sep:(Format.formatter -> unit -> unit) ->
+  ('b -> Format.formatter -> unit) ->
+  (Ident.t option * 'b) list -> Format.formatter -> unit
+
 val tree_of_signature: Types.signature -> out_sig_item list
 val tree_of_typexp: bool -> type_expr -> out_type
 val modtype_declaration: Ident.t -> formatter -> modtype_declaration -> unit
@@ -162,21 +178,38 @@ val tree_of_cltype_declaration:
 val cltype_declaration: Ident.t -> formatter -> class_type_declaration -> unit
 val type_expansion: type_expr -> Format.formatter -> type_expr -> unit
 val prepare_expansion: type_expr * type_expr -> type_expr * type_expr
-val trace:
-  bool -> bool-> string -> formatter
-  -> (type_expr * type_expr) Ctype.Unification_trace.elt list -> unit
-val report_unification_error:
-    formatter -> Env.t ->
-    Ctype.Unification_trace.t ->
-    ?type_expected_explanation:(formatter -> unit) ->
-    (formatter -> unit) -> (formatter -> unit) ->
-    unit
-val report_subtyping_error:
-    formatter -> Env.t -> Ctype.Unification_trace.t -> string
-    -> Ctype.Unification_trace.t -> unit
 val report_ambiguous_type_error:
     formatter -> Env.t -> (Path.t * Path.t) -> (Path.t * Path.t) list ->
     (formatter -> unit) -> (formatter -> unit) -> (formatter -> unit) -> unit
+
+val report_unification_error :
+  formatter -> Env.t ->
+  Errortrace.unification Errortrace.t ->
+  ?type_expected_explanation:(formatter -> unit) ->
+  (formatter -> unit) -> (formatter -> unit) ->
+  unit
+
+val report_equality_error :
+  formatter -> Env.t ->
+  Errortrace.comparison Errortrace.t ->
+  (formatter -> unit) -> (formatter -> unit) ->
+  unit
+
+val report_moregen_error :
+  formatter -> Env.t ->
+  Errortrace.comparison Errortrace.t ->
+  (formatter -> unit) -> (formatter -> unit) ->
+  unit
+
+module Subtype : sig
+  val report_error :
+    formatter ->
+    Env.t ->
+    Errortrace.Subtype.t ->
+    string ->
+    Errortrace.unification Errortrace.t ->
+    unit
+end
 
 (* for toploop *)
 val print_items: (Env.t -> signature_item -> 'a option) ->

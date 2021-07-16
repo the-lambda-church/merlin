@@ -59,7 +59,8 @@ and 'k pattern_desc =
   | Tpat_constant : constant -> value pattern_desc
   | Tpat_tuple : value general_pattern list -> value pattern_desc
   | Tpat_construct :
-      Longident.t loc * constructor_description * value general_pattern list ->
+      Longident.t loc * constructor_description * value general_pattern list
+      * (Ident.t loc list * core_type) option ->
       value pattern_desc
   | Tpat_variant :
       label * value general_pattern option * row_desc ref ->
@@ -356,6 +357,7 @@ and signature_item_desc =
   | Tsig_modsubst of module_substitution
   | Tsig_recmodule of module_declaration list
   | Tsig_modtype of module_type_declaration
+  | Tsig_modtypesubst of module_type_declaration
   | Tsig_open of open_description
   | Tsig_include of include_description
   | Tsig_class of class_description list
@@ -420,8 +422,11 @@ and include_declaration = module_expr include_infos
 and with_constraint =
     Twith_type of type_declaration
   | Twith_module of Path.t * Longident.t loc
+  | Twith_modtype of module_type
   | Twith_typesubst of type_declaration
   | Twith_modsubst of Path.t * Longident.t loc
+  | Twith_modtypesubst of module_type
+
 
 and core_type =
 (* mutable because of [Typeclass.declare_method] *)
@@ -615,6 +620,13 @@ and 'a class_infos =
     ci_attributes: attribute list;
    }
 
+type implementation = {
+  structure: structure;
+  coercion: module_coercion;
+  signature: Types.signature
+}
+
+
 (* Auxiliary functions over the a.s.t. *)
 
 let as_computation_pattern (p : pattern) : computation general_pattern =
@@ -661,7 +673,7 @@ let shallow_iter_pattern_desc
   = fun f -> function
   | Tpat_alias(p, _, _) -> f.f p
   | Tpat_tuple patl -> List.iter f.f patl
-  | Tpat_construct(_, _, patl) -> List.iter f.f patl
+  | Tpat_construct(_, _, patl, _) -> List.iter f.f patl
   | Tpat_variant(_, pat, _) -> Option.iter f.f pat
   | Tpat_record (lbl_pat_list, _) ->
       List.iter (fun (_, _, pat) -> f.f pat) lbl_pat_list
@@ -685,8 +697,8 @@ let shallow_map_pattern_desc
       Tpat_tuple (List.map f.f pats)
   | Tpat_record (lpats, closed) ->
       Tpat_record (List.map (fun (lid, l,p) -> lid, l, f.f p) lpats, closed)
-  | Tpat_construct (lid, c,pats) ->
-      Tpat_construct (lid, c, List.map f.f pats)
+  | Tpat_construct (lid, c, pats, ty) ->
+      Tpat_construct (lid, c, List.map f.f pats, ty)
   | Tpat_array pats ->
       Tpat_array (List.map f.f pats)
   | Tpat_lazy p1 -> Tpat_lazy (f.f p1)

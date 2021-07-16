@@ -29,16 +29,18 @@ type type_replacement =
 type t =
   { types: type_replacement Path.Map.t;
     modules: Path.t Path.Map.t;
-    modtypes: module_type Ident.Map.t;
+    modtypes: module_type Path.Map.t;
     for_saving: bool;
+    loc: Location.t option;
     make_loc_ghost: bool;
   }
 
 let identity =
   { types = Path.Map.empty;
     modules = Path.Map.empty;
-    modtypes = Ident.Map.empty;
+    modtypes = Path.Map.empty;
     for_saving = false;
+    loc = None;
     make_loc_ghost = false;
   }
 
@@ -51,15 +53,21 @@ let add_type_function id ~params ~body s =
 let add_module_path id p s = { s with modules = Path.Map.add id p s.modules }
 let add_module id p s = add_module_path (Pident id) p s
 
-let add_modtype id ty s = { s with modtypes = Ident.Map.add id ty s.modtypes }
+let add_modtype_path p ty s = { s with modtypes = Path.Map.add p ty s.modtypes }
+let add_modtype id ty s = add_modtype_path (Pident id) ty s
 
 let for_saving s = { s with for_saving = true }
 let make_loc_ghost s = { s with make_loc_ghost = true }
 
+let change_locs s loc = { s with loc = Some loc }
+
 let loc s x =
-  if s.for_saving && not !Clflags.keep_locs then Location.none
-  else if s.make_loc_ghost then { x with loc_ghost = true }
-  else x
+  match s.loc with
+  | Some l -> l
+  | None ->
+    if s.for_saving && not !Clflags.keep_locs then Location.none
+    else if s.make_loc_ghost then { x with loc_ghost = true }
+    else x
 
 let remove_loc =
   let open Ast_mapper in
@@ -92,17 +100,18 @@ let rec module_path s path =
     | Papply(p1, p2) ->
        Papply(module_path s p1, module_path s p2)
 
-let modtype_path s = function
-    Pident id as p ->
-      begin try
-        match Ident.Map.find id s.modtypes with
-          | Mty_ident p -> p
-          | _ -> fatal_error "Subst.modtype_path"
-      with Not_found -> p end
-  | Pdot(p, n) ->
-      Pdot(module_path s p, n)
-  | Papply _ ->
-      fatal_error "Subst.modtype_path"
+let modtype_path s path =
+      match Path.Map.find path s.modtypes with
+      | Mty_ident p -> p
+      | Mty_alias _ | Mty_signature _ | Mty_functor _ ->
+         fatal_error "Subst.modtype_path"
+      | exception Not_found ->
+         match path with
+         | Pdot(p, n) ->
+            Pdot(module_path s p, n)
+         | Papply _ ->
+            fatal_error "Subst.modtype_path"
+         | Pident _ -> path
 
 let type_path s path =
   match Path.Map.find path s.types with
@@ -136,7 +145,8 @@ let reset_for_saving () = new_id := -1
 
 let newpersty desc =
   decr new_id;
-  { desc; level = generic_level; scope = Btype.lowest_level; id = !new_id }
+  Private_type_expr.create
+    desc ~level:generic_level ~scope:Btype.lowest_level ~id:!new_id
 
 (* ensure that all occurrences of 'Tvar None' are physically shared *)
 let tvar_none = Tvar None
@@ -159,10 +169,12 @@ let rec typexp copy_scope s ty =
           else newty2 ty.level desc
         in
         For_copy.save_desc copy_scope ty desc;
-        ty.desc <- Tsubst ty';
+        Private_type_expr.set_desc ty (Tsubst (ty', None));
+        (* TODO: move this line to btype.ml
+           there is a similar problem also in ctype.ml *)
         ty'
       else ty
-  | Tsubst ty ->
+  | Tsubst (ty, _) ->
       ty
   | Tfield (m, k, _t1, _t2) when not s.for_saving && m = dummy_method
       && field_kind_repr k <> Fabsent && (repr ty).level < generic_level ->
@@ -180,9 +192,9 @@ let rec typexp copy_scope s ty =
       not (is_Tconstr ty) && is_constr_row ~allow_ident:false tm in
     (* Make a stub *)
     let ty' = if s.for_saving then newpersty (Tvar None) else newgenvar () in
-    ty'.scope <- ty.scope;
-    ty.desc <- Tsubst ty';
-    ty'.desc <-
+    Private_type_expr.set_scope ty' ty.scope;
+    Private_type_expr.set_desc ty (Tsubst (ty', None));
+    Private_type_expr.set_desc ty'
       begin if has_fixed_row then
         match tm.desc with (* PR#7348 *)
           Tconstr (Pdot(m,i), tl, _abbrev) ->
@@ -198,8 +210,9 @@ let rec typexp copy_scope s ty =
          | Type_function { params; body } ->
             Tlink (!ctype_apply_env_empty params body args)
          end
-      | Tpackage(p, n, tl) ->
-          Tpackage(modtype_path s p, n, List.map (typexp copy_scope s) tl)
+      | Tpackage(p, fl) ->
+          Tpackage(modtype_path s p,
+                    List.map (fun (n, ty) -> (n, typexp copy_scope s ty)) fl)
       | Tobject (t1, name) ->
           let t1' = typexp copy_scope s t1 in
           let name' =
@@ -217,9 +230,10 @@ let rec typexp copy_scope s ty =
           (* We must substitute in a subtle way *)
           (* Tsubst takes a tuple containing the row var and the variant *)
           begin match more.desc with
-            Tsubst {desc = Ttuple [_;ty2]} ->
+            Tsubst (_, Some ty2) ->
               (* This variant type has been already copied *)
-              ty.desc <- Tsubst ty2; (* avoid Tlink in the new type *)
+              Private_type_expr.set_desc ty (Tsubst (ty2, None));
+              (* avoid Tlink in the new type *)
               Tlink ty2
           | _ ->
               let dup =
@@ -228,7 +242,7 @@ let rec typexp copy_scope s ty =
               (* Various cases for the row variable *)
               let more' =
                 match more.desc with
-                  Tsubst ty -> ty
+                  Tsubst (ty, None) -> ty
                 | Tconstr _ | Tnil -> typexp copy_scope s more
                 | Tunivar _ | Tvar _ ->
                     For_copy.save_desc copy_scope more more.desc;
@@ -237,7 +251,9 @@ let rec typexp copy_scope s ty =
                 | _ -> assert false
               in
               (* Register new type first for recursion *)
-              more.desc <- Tsubst(newgenty(Ttuple[more';ty']));
+              Private_type_expr.set_desc more
+                (Tsubst (more', Some ty'));
+              (* TODO: check if more' can be eliminated *)
               (* Return a new copy *)
               let row =
                 copy_row (typexp copy_scope s) true row (not dup) more' in
@@ -295,8 +311,9 @@ let type_declaration' copy_scope s decl =
     type_kind =
       begin match decl.type_kind with
         Type_abstract -> Type_abstract
-      | Type_variant cstrs ->
-          Type_variant (List.map (constructor_declaration copy_scope s) cstrs)
+      | Type_variant (cstrs, rep) ->
+          Type_variant (List.map (constructor_declaration copy_scope s) cstrs,
+                        rep)
       | Type_record(lbls, rep) ->
           Type_record (List.map (label_declaration copy_scope s) lbls, rep)
       | Type_open -> Type_open
@@ -315,7 +332,7 @@ let type_declaration' copy_scope s decl =
     type_loc = loc s decl.type_loc;
     type_attributes = attrs s decl.type_attributes;
     type_immediate = decl.type_immediate;
-    type_unboxed = decl.type_unboxed;
+    type_unboxed_default = decl.type_unboxed_default;
     type_uid = decl.type_uid;
   }
 
@@ -464,13 +481,16 @@ let rename_bound_idents scoping s sg =
 
 let rec modtype scoping s = function
     Mty_ident p as mty ->
-      begin match p with
-        Pident id ->
-          begin try Ident.Map.find id s.modtypes with Not_found -> mty end
-      | Pdot(p, n) ->
-          Mty_ident(Pdot(module_path s p, n))
-      | Papply _ ->
-          fatal_error "Subst.modtype"
+      begin match Path.Map.find p s.modtypes with
+       | mty -> mty
+       | exception Not_found ->
+          begin match p with
+          | Pident _ -> mty
+          | Pdot(p, n) ->
+             Mty_ident(Pdot(module_path s p, n))
+          | Papply _ ->
+             fatal_error "Subst.modtype"
+          end
       end
   | Mty_signature sg ->
       Mty_signature(signature scoping s sg)
@@ -538,11 +558,13 @@ and modtype_declaration scoping s decl  =
 (* For every binding k |-> d of m1, add k |-> f d to m2
    and return resulting merged map. *)
 
-let merge_tbls f m1 m2 =
-  Ident.Map.fold (fun k d accu -> Ident.Map.add k (f d) accu) m1 m2
-
 let merge_path_maps f m1 m2 =
   Path.Map.fold (fun k d accu -> Path.Map.add k (f d) accu) m1 m2
+
+let keep_latest_loc l1 l2 =
+  match l2 with
+  | None -> l1
+  | Some _ -> l2
 
 let type_replacement s = function
   | Path p -> Path (type_path s p)
@@ -558,7 +580,8 @@ let type_replacement s = function
 let compose s1 s2 =
   { types = merge_path_maps (type_replacement s2) s1.types s2.types;
     modules = merge_path_maps (module_path s2) s1.modules s2.modules;
-    modtypes = merge_tbls (modtype Keep s2) s1.modtypes s2.modtypes;
+    modtypes = merge_path_maps (modtype Keep s2) s1.modtypes s2.modtypes;
     for_saving = s1.for_saving || s2.for_saving;
+    loc = keep_latest_loc s1.loc s2.loc;
     make_loc_ghost = s1.make_loc_ghost || s2.make_loc_ghost;
   }

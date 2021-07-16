@@ -89,11 +89,15 @@ and 'k pattern_desc =
          *)
   | Tpat_construct :
       Longident.t loc * Types.constructor_description *
-        value general_pattern list ->
+        value general_pattern list * (Ident.t loc list * core_type) option ->
       value pattern_desc
-        (** C                []
-            C P              [P]
-            C (P1, ..., Pn)  [P1; ...; Pn]
+        (** C                             ([], None)
+            C P                           ([P], None)
+            C (P1, ..., Pn)               ([P1; ...; Pn], None)
+            C (P : t)                     ([P], Some ([], t))
+            C (P1, ..., Pn : t)           ([P1; ...; Pn], Some ([], t))
+            C (type a) (P : t)            ([P], Some ([a], t))
+            C (type a) (P1, ..., Pn : t)  ([P1; ...; Pn], Some ([a], t))
           *)
   | Tpat_variant :
       label * value general_pattern option * Types.row_desc ref ->
@@ -492,6 +496,7 @@ and signature_item_desc =
   | Tsig_modsubst of module_substitution
   | Tsig_recmodule of module_declaration list
   | Tsig_modtype of module_type_declaration
+  | Tsig_modtypesubst of module_type_declaration
   | Tsig_open of open_description
   | Tsig_include of include_description
   | Tsig_class of class_description list
@@ -557,8 +562,10 @@ and include_declaration = module_expr include_infos
 and with_constraint =
     Twith_type of type_declaration
   | Twith_module of Path.t * Longident.t loc
+  | Twith_modtype of module_type
   | Twith_typesubst of type_declaration
   | Twith_modsubst of Path.t * Longident.t loc
+  | Twith_modtypesubst of module_type
 
 and core_type =
   { mutable ctyp_desc : core_type_desc;
@@ -753,6 +760,21 @@ and 'a class_infos =
     ci_loc: Location.t;
     ci_attributes: attributes;
    }
+
+type implementation = {
+  structure: structure;
+  coercion: module_coercion;
+  signature: Types.signature
+}
+(** A typechecked implementation including its module structure, its exported
+    signature, and a coercion of the module against that signature.
+
+    If an .mli file is present, the signature will come from that file and be
+    the exported signature of the module.
+
+    If there isn't one, the signature will be inferred from the module
+    structure.
+*)
 
 (* Auxiliary functions over the a.s.t. *)
 

@@ -36,6 +36,8 @@ val structure: Format.formatter -> Parsetree.structure -> unit
 val string_of_structure: Parsetree.structure -> string
 val module_: Format.formatter -> Parsetree.module_expr -> unit
 
+val module_expr: Format.formatter -> Parsetree.module_expr -> unit
+
 val toplevel_phrase : Format.formatter -> Parsetree.toplevel_phrase -> unit
 val top_phrase: Format.formatter -> Parsetree.toplevel_phrase -> unit
 
