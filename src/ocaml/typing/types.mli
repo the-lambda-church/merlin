@@ -243,7 +243,11 @@ end
 (* *)
 
 module Uid : sig
-  type t
+  type t =
+    | Compilation_unit of string
+    | Item of { comp_unit: string; id: int }
+    | Internal
+    | Predef of string
 
   val reinit : unit -> unit
 

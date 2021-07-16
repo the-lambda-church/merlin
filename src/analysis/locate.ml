@@ -864,3 +864,74 @@ let get_doc ~config ~env ~local_defs ~comments ~pos =
   | `File_not_found _
   | `Not_found _
   | `Not_in_env _ as otherwise -> otherwise
+
+let from_node ~config env node =
+  log ~title:"from_node" 
+    "Locating declaration using UIDs from node %s"
+    @@ Browse_raw.string_of_node node;
+  let unit_name = Env.get_unit_name () in
+  Preferences.set `ML;
+
+  let locate_uid uid ident = 
+    log ~title:"from_node" 
+      "Trying to locate UID: %a"Logger.fmt (fun fmt ->
+        Format.fprintf fmt "%a" Types.Uid.print uid);
+    let_ref loadpath (Mconfig.cmt_path config) @@ fun () ->
+      match uid with
+      | Predef id -> `Builtin id
+      | Internal -> `Builtin "<internal>"
+      | Types.Uid.Item { comp_unit; _ } as uid when comp_unit = unit_name ->
+        begin match Locate_with_uids.in_env uid env with
+        | Some loc -> find_source ~config loc ident
+        | None -> `Not_found (ident, None) end
+      | Types.Uid.Item { comp_unit; id } ->
+        let file = 
+          Printf.sprintf "%s.cmti" (String.lowercase_ascii comp_unit)
+          |> File.cmti
+        in
+        begin match 
+          Utils.find_file ~config ~with_fallback:true file 
+        with
+        | Some cmt_file ->
+          log ~title:"from_node" 
+            "Loading CMT file: %s" cmt_file;
+          let cached = (Cmt_cache.read cmt_file).cmt_infos.cmt_annots in
+          begin match Locate_with_uids.in_annots uid cached with 
+          | Some loc -> find_source ~config loc ident
+          | None -> `Not_found (ident, None) end
+        | None ->  File.explain_not_found ident file end
+      | Compilation_unit comp_unit -> 
+        let pos_fname = 
+          String.(concat ~sep:"." [uncapitalize_ascii comp_unit; "mli"])
+        in
+        let loc = Warnings.{
+            loc_start = { 
+              pos_fname; 
+              pos_lnum = 1;
+              pos_bol = 0;
+              pos_cnum = 0;  
+            };
+            loc_end = Lexing.dummy_pos;
+            loc_ghost = true
+          } 
+        in
+        find_source ~config loc ident
+  in
+  match node with 
+
+  | Expression { exp_desc = Texp_ident (path, _, { val_uid; _ }); _ } -> 
+    locate_uid val_uid (Path.last path)
+  
+  | Core_type { ctyp_desc = Ttyp_constr (path, _, _); ctyp_loc; _ } -> 
+    log ~title:"from_node" 
+      "Type loc: %a"Logger.fmt (fun fmt ->
+        Format.fprintf fmt "%a" Location.print_loc ctyp_loc);
+    let { Types.type_uid; _ } = Env.find_type path env in
+    locate_uid type_uid (Path.last path)
+
+  | Module_expr { mod_desc = Tmod_ident (path, _); _ } ->
+    let { Types.md_uid; _ } = Env.find_module path env in
+    locate_uid md_uid (Path.last path)
+    
+  | _ -> failwith "Not_implemented" 
+  (* todo : which other cases should be handled ?*)

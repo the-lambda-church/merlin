@@ -3,3 +3,7 @@
    issue802 issue845 issue1199 sig-substs)
  (enabled_if
   (<> %{os_type} Win32)))
+
+(cram
+ (applies_to :whole_subtree)
+ (alias locate))

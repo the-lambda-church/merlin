@@ -506,7 +506,9 @@ let dispatch pipeline (type a) : a Query_protocol.t -> a =
     let typer = Mpipeline.typer_result pipeline in
     let local_defs = Mtyper.get_typedtree typer in
     let pos = Mpipeline.get_lexing_pos pipeline pos in
-    let env, _ = Mbrowse.leaf_node (Mtyper.node_at typer pos) in
+    let config = Mpipeline.final_config pipeline in
+    let structures = Mbrowse.enclosing pos [Mbrowse.of_typedtree local_defs] in
+    let env, node = Mbrowse.leaf_node structures in
     let path =
       match patho with
       | Some p -> p
@@ -519,22 +521,27 @@ let dispatch pipeline (type a) : a Query_protocol.t -> a =
         path
     in
     if path = "" then `Invalid_context else
-    begin match
-      Locate.from_string
-        ~config:(Mpipeline.final_config pipeline)
-        ~env ~local_defs ~pos ml_or_mli path
-    with
-    | `Found (file, pos) ->
-      Locate.log ~title:"result"
-        "found: %s" (Option.value ~default:"<local buffer>" file);
-      `Found (file, pos)
-    | `Missing_labels_namespace ->
-      (* Can't happen because we haven't passed a namespace as input. *)
-      assert false
-    | (`Not_found _|`At_origin |`Not_in_env _|`File_not_found _|`Builtin _) as
-      otherwise ->
-      Locate.log ~title:"result" "not found";
-      otherwise
+    let results = 
+      if ml_or_mli = `MLI then
+        (* For now we use the new Uid based locate only for MLI mode *)
+        Locate.from_node ~config env node
+      else 
+        Locate.from_string
+          ~config
+          ~env ~local_defs ~pos ml_or_mli path
+    in
+    begin match results with
+      | `Found (file, pos) ->
+        Locate.log ~title:"result"
+          "found: %s" (Option.value ~default:"<local buffer>" file);
+        `Found (file, pos)
+      | `Missing_labels_namespace ->
+        (* Can't happen because we haven't passed a namespace as input. *)
+        assert false
+      | (`Not_found _|`At_origin |`Not_in_env _|`File_not_found _|`Builtin _) as
+        otherwise ->
+        Locate.log ~title:"result" "not found";
+        otherwise
     end
 
   | Jump (target, pos) ->

@@ -76,3 +76,14 @@ val get_doc
       | `Not_found of string * string option
       | `Not_in_env of string
       | `No_documentation ]
+
+val from_node
+  : config:Mconfig.t
+  -> Env.t
+  -> Mbrowse.node
+  -> [> `File_not_found of string
+     | `Found of string option * Lexing.position
+     | `Builtin of string
+     (* | `Not_in_env of string *)
+     | `Not_found of string * string option 
+     ]
